@@ -1,57 +1,57 @@
-Snowflake Procedure Trigger
-=============
+# MS SQL Procedure Trigger
 
-Description
+
+Application capable of executing stored procedures in MS SQL databases. (Synapse, SQL Server, etc.)
 
 **Table of contents:**
 
 [TOC]
 
-Functionality notes
-===================
+## Functionality notes
 
-Prerequisites
-=============
 
-Get the API token, register application, etc.
+Triggers given procedures defined in rows and allows defining parameters. 
+Only procedures are triggered and input fields are validated to prevent injection. 
 
-Features
-========
+
+## Features
+
 
 | **Feature**             | **Note**                                      |
 |-------------------------|-----------------------------------------------|
 | Generic UI form         | Dynamic UI form                               |
 | Row Based configuration | Allows structuring the configuration in rows. |
-| oAuth                   | oAuth authentication enabled                  |
-| Incremental loading     | Allows fetching data in new increments.       |
-| Backfill mode           | Support for seamless backfill setup.          |
-| Date range filter       | Specify date range.                           |
 
-Supported endpoints
-===================
 
-If you need more endpoints, please submit your request to
-[ideas.keboola.com](https://ideas.keboola.com/)
 
-Configuration
-=============
 
-Param 1
--------
+## Configuration
 
-Param 2
--------
 
-Output
-======
+### Credentials
 
-List of tables, foreign keys, schema.
+Database credentials:
+
+- **Server**
+- **Database name**
+- **User name**
+- **Password**
+
+
+### Row configuration
+
+- **Procedure Name** - name of the procedure. Must not contain empty characters and `;`
+
+- **Procedure Arguments** - `Argument Name` and `Value` pairs. Must not contain empty characters and `;`
+
+
+
 
 Development
 -----------
 
 If required, change local data folder (the `CUSTOM_FOLDER` placeholder) path to
-your custom path in the `docker-compose.yml` file:
+your custom path in the docker-compose file:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     volumes:
@@ -63,8 +63,8 @@ Clone this repository, init the workspace and run the component with following
 command:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-git clone git@bitbucket.org:kds_consulting_team/kds-team.app-snowflake-procedure-trigger.git kds-team.app-snowflake-procedure-trigger
-cd kds-team.app-snowflake-procedure-trigger
+git clone repo_path my-new-component
+cd my-new-component
 docker-compose build
 docker-compose run --rm dev
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

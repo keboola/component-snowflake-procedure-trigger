@@ -1,1 +1,1 @@
-Snowflake Procedure Trigger short description
+Application capable of executing stored procedures in MS SQL databases. (Synapse, SQL Server, etc.)

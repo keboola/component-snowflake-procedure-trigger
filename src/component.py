@@ -1,22 +1,38 @@
-"""
+'''
 Template Component main class.
 
-"""
-import csv
+'''
 import logging
-from datetime import datetime
 
+import snowflake.connector
+from keboola.component import UserException
 from keboola.component.base import ComponentBase
-from keboola.component.exceptions import UserException
-
 # configuration variables
-KEY_API_TOKEN = '#api_token'
-KEY_PRINT_HELLO = 'print_hello'
+from snowflake.connector import SnowflakeConnection
+
+from configuration import Configuration
+
+KEY_DATABASE = 'database'
+KEY_USER = 'user_name'
+KEY_PASSWORD = '#password'
+KEY_SERVER = 'server'
+
+KEY_NAME = 'name'
+KEY_VALUE = 'value'
+KEY_PROC_PARAMETERS = 'procedure_parameters'
 
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
-REQUIRED_PARAMETERS = [KEY_PRINT_HELLO]
+REQUIRED_PARAMETERS = [KEY_DATABASE,
+                       KEY_USER,
+                       KEY_PASSWORD,
+                       KEY_SERVER]
 REQUIRED_IMAGE_PARS = []
+
+# Set your account and login information (replace the variables with the necessary values).
+ACCOUNT = '<account_identifier>'
+USER = '<login_name>'
+PASSWORD = '<password>'
 
 
 class Component(ComponentBase):
@@ -31,46 +47,95 @@ class Component(ComponentBase):
     """
 
     def __init__(self):
-        super().__init__()
+        super().__init__(required_parameters=REQUIRED_PARAMETERS,
+                         required_image_parameters=REQUIRED_IMAGE_PARS)
+
+        self._connection: SnowflakeConnection
 
     def run(self):
-        """
+        '''
         Main execution code
-        """
-
-        # ####### EXAMPLE TO REMOVE
-        # check for missing configuration parameters
-        self.validate_configuration_parameters(REQUIRED_PARAMETERS)
-        self.validate_image_parameters(REQUIRED_IMAGE_PARS)
+        '''
         params = self.configuration.parameters
-        # Access parameters in data/config.json
-        if params.get(KEY_PRINT_HELLO):
-            logging.info("Hello World")
 
-        # get last state data/in/state.json from previous run
-        previous_state = self.get_state_file()
-        logging.info(previous_state.get('some_state_parameter'))
+        self._init_configuration()
 
-        # Create output table (Tabledefinition - just metadata)
-        table = self.create_out_table_definition('output.csv', incremental=True, primary_key=['timestamp'])
+        proc_params = self._get_parameters()
 
-        # get file path of the table (data/out/tables/Features.csv)
-        out_table_path = table.full_path
-        logging.info(out_table_path)
+        self._create_connection()
+        try:
+            query = self._build_exec_query(params[KEY_NAME], **proc_params)
 
-        # DO whatever and save into out_table_path
-        with open(table.full_path, mode='wt', encoding='utf-8', newline='') as out_file:
-            writer = csv.DictWriter(out_file, fieldnames=['timestamp'])
-            writer.writeheader()
-            writer.writerow({"timestamp": datetime.now().isoformat()})
+            logging.info(f'Executing procedure: {query}')
 
-        # Save table manifest (output.csv.manifest) from the tabledefinition
-        self.write_manifest(table)
+            res = self.run_query(query)
+            logging.info(res)
+        finally:
+            self._connection.close()
 
-        # Write new state - will be available next run
-        self.write_state_file({"some_state_parameter": "value"})
+    def _create_connection(self):
+        self._connection = snowflake.connector.connect(
+            user=self._configuration.username,
+            password=self._configuration.pswd_password,
+            account=self._configuration.account,
+            warehouse=self._configuration.warehouse
+        )
 
-        # ####### EXAMPLE TO REMOVE END
+    def _init_configuration(self) -> None:
+        self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
+        self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
+
+    def _get_parameters(self):
+        parameters = self._configuration.procedure_parameters
+        parameters_dict = {}
+        for par in parameters:
+            parameters_dict[par.name] = par.value
+        return parameters_dict
+
+    def _build_exec_query(self, procedure_name: str, **parameters):
+        # validate
+        errors = set()
+        errors.add(self._validate_procedure_argument(procedure_name))
+
+        query = ['EXEC', procedure_name]
+        procedure_arguments = []
+        for par in parameters:
+            # validate
+            errors.add(self._validate_procedure_argument(par))
+            errors.add(self._validate_procedure_argument(parameters[par]))
+
+            procedure_arguments.append(f'@{par} = {parameters[par]}')
+        query.append(', '.join(procedure_arguments))
+        query.append(';')
+
+        # remove Nones
+        errors.discard(None)
+        if errors:
+            raise UserException(f'{"; ".join(errors)}')
+
+        return ' '.join(query)
+
+    def _validate_procedure_argument(self, arg):
+        invalid_characters = [' ', ';']
+        error = None
+        if any(char in arg for char in invalid_characters):
+            error = f'Invalid argument {arg}!'
+        return error
+
+    def run_query(self, query):
+        results = []
+        cur = self._connection.cursor()
+        try:
+            cur.execute(query)
+            columns = [column[0] for column in cur.description]
+            for row in cur.fetchall():
+                results.append(dict(zip(columns, row)))
+        except Exception as e:
+            raise UserException(e) from e
+        finally:
+            cur.close()
+
+        return results
 
 
 """
@@ -79,8 +144,7 @@ class Component(ComponentBase):
 if __name__ == "__main__":
     try:
         comp = Component()
-        # this triggers the run method by default and is controlled by the configuration.action parameter
-        comp.execute_action()
+        comp.run()
     except UserException as exc:
         logging.exception(exc)
         exit(1)

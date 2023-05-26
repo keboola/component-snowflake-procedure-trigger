@@ -1,5 +1,6 @@
-keboola.component==1.4.0
-keboola.utils
-keboola.http-client
+keboola.component==1.4.3
+snowflake-connector-python
+git+https://github.com/bakobako/dataconf#egg=dataconf
 mock
 freezegun
+
