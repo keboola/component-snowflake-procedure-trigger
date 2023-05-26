@@ -21,28 +21,8 @@
       "uniqueItems": true,
       "propertyOrder": 5,
       "items": {
-        "type": "object",
-        "title": "Argument",
-        "required": [
-          "name",
-          "value"
-        ],
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Argument Name",
-            "description": "Do not include the @ character.",
-            "minLength": 1,
-            "propertyOrder": 1
-          },
-          "value": {
-            "type": "string",
-            "title": "Argument Value",
-            "description": "Characters like ' to mark the datatype may be included.",
-            "minLength": 1,
-            "propertyOrder": 2
-          }
-        }
+        "type": "string",
+        "title": "parameter"
       }
     }
   }

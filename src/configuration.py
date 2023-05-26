@@ -1,7 +1,6 @@
 import dataclasses
 import json
 from dataclasses import dataclass
-from enum import Enum
 from typing import List
 
 import dataconf
@@ -48,19 +47,8 @@ class ConfigurationBase:
 
 @dataclass
 class ProcedureParameters(ConfigurationBase):
-    """
-    pswd_api_token: PirateWeather API token
-    """
     name: str
     value: str
-
-
-class Granularity(str, Enum):
-    """
-    hourly: description of hourly
-    """
-    HOURLY = "hourly"
-    DAILY = "daily"
 
 
 @dataclass
@@ -70,4 +58,6 @@ class Configuration(ConfigurationBase):
     pswd_password: str
     warehouse: str
     name: str
-    procedure_parameters: list[ProcedureParameters] = dataclasses.field(default_factory=list)
+    procedure_parameters: List[str] = dataclasses.field(default_factory=list)
+    database: str = ''
+    schema: str = ''
