@@ -60,7 +60,7 @@ class Component(ComponentBase):
 
         query = f'CALL {procedure_name}'
         if parameters:
-            par_arr_string = ', '.join([f':{i+1}' for i, p in enumerate(parameters)])
+            par_arr_string = ', '.join([f' %s' for i, p in enumerate(parameters)])
             query += f'({par_arr_string})'
         else:
             query += '()'
