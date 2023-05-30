@@ -21,8 +21,29 @@
       "uniqueItems": true,
       "propertyOrder": 5,
       "items": {
-        "type": "string",
-        "title": "parameter"
+        "type": "object",
+        "title": "Argument",
+        "required": [
+          "nullable",
+          "value"
+        ],
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Argument Value",
+            "description": "Arguments will be sent as string and the implicit conversion left to Snowflake engine. E.g. numbers, or dates YYYY-MM-DD are allowed",
+            "minLength": 1,
+            "propertyOrder": 1
+          },
+          "nullable": {
+            "type": "boolean",
+            "title": "Nullable",
+            "format": "checkbox",
+            "default": true,
+            "description": "If marked as true, empty values will be converted to NULL",
+            "propertyOrder": 2
+          }
+        }
       }
     }
   }

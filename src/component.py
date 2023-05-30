@@ -10,7 +10,7 @@ from keboola.component import UserException
 from keboola.component.base import ComponentBase
 from snowflake.connector import SnowflakeConnection
 
-from configuration import Configuration
+from configuration import Configuration, ProcedureParameters
 
 REQUIRED_IMAGE_PARS = []
 
@@ -32,10 +32,12 @@ class Component(ComponentBase):
         try:
             query = self._build_exec_query(self._configuration.name, self._configuration.procedure_parameters)
 
-            logging.info(f'Executing procedure: {query}')
+            parameters = self._get_parameters()
 
-            res = self.run_query(query, self._configuration.procedure_parameters)
-            logging.info(res)
+            logging.info(f'Executing procedure: {query}, parameters: {parameters}')
+            res = self.run_query(query, parameters)
+
+            logging.info(f"The result of the call is: {res}")
         finally:
             self._connection.close()
 
@@ -53,14 +55,14 @@ class Component(ComponentBase):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
         self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
 
-    def _build_exec_query(self, procedure_name: str, parameters):
+    def _build_exec_query(self, procedure_name: str, parameters: list[ProcedureParameters]):
         # validate
         errors = set()
         errors.add(self._validate_procedure_argument(procedure_name))
 
         query = f'CALL {procedure_name}'
         if parameters:
-            par_arr_string = ', '.join([f' %s' for i, p in enumerate(parameters)])
+            par_arr_string = ', '.join([' %s' for p in parameters])
             query += f'({par_arr_string})'
         else:
             query += '()'
@@ -88,6 +90,15 @@ class Component(ComponentBase):
             cur.close()
 
         return results
+
+    def _get_parameters(self) -> list:
+        parameters = []
+        for p in self._configuration.procedure_parameters:
+            value = p.value
+            if not value and p.nullable:
+                value = None
+            parameters.append(value)
+        return parameters
 
 
 """

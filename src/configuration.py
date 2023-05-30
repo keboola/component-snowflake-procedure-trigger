@@ -47,8 +47,8 @@ class ConfigurationBase:
 
 @dataclass
 class ProcedureParameters(ConfigurationBase):
-    name: str
     value: str
+    nullable: bool
 
 
 @dataclass
@@ -58,6 +58,6 @@ class Configuration(ConfigurationBase):
     pswd_password: str
     warehouse: str
     name: str
-    procedure_parameters: List[str] = dataclasses.field(default_factory=list)
+    procedure_parameters: List[ProcedureParameters] = dataclasses.field(default_factory=list)
     database: str = ''
     schema: str = ''
