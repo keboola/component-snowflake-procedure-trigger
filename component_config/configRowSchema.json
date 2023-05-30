@@ -40,7 +40,7 @@
             "title": "Nullable",
             "format": "checkbox",
             "default": true,
-            "description": "If marked as true, empty values will be converted to NULL",
+            "description": "Convert emtpy value to NULL",
             "propertyOrder": 2
           }
         }

@@ -1,1 +1,1 @@
-Application capable of executing stored procedures in MS SQL databases. (Synapse, SQL Server, etc.)
+Application capable of executing stored procedures in Snowflake DWH.
