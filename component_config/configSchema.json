@@ -27,11 +27,23 @@
       "description": "A password authenticating the Snowflake user.",
       "propertyOrder": 300
     },
+    "database": {
+      "title": "Database",
+      "type": "string",
+      "description": "Name of the Snowflake database.",
+      "propertyOrder": 410
+    },
+    "schema": {
+      "title": "Schema",
+      "type": "string",
+      "description": "Name of the Snowflake schema.",
+      "propertyOrder": 420
+    },
     "warehouse": {
       "title": "Warehouse",
       "type": "string",
       "description": "Name of the Snowflake warehouse to be used.",
-      "propertyOrder": 400
+      "propertyOrder": 500
     }
   }
 }
