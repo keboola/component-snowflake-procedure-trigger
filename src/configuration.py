@@ -60,8 +60,12 @@ class Configuration(ConfigurationBase):
     procedure_parameters: List[ProcedureParameters] = dataclasses.field(default_factory=list)
     database: str = ''
     schema: str = ''
-    # Authentication. `auth_type` selects password vs key-pair (JWT); it defaults to
-    # 'password' so existing password configs (which have no auth_type) keep working.
+    # Authentication. The config schema defaults `auth_type` to 'key_pair' (recommended for
+    # new configs, matching the sibling Snowflake components). This dataclass default stays
+    # 'password' on purpose: a config created before auth_type existed has no auth_type in its
+    # stored parameters, so at runtime it must fall back to password and keep working. The
+    # schema default only applies to configs created/edited in the UI, not to what the
+    # scheduled job reads from storage.
     auth_type: str = 'password'
     pswd_password: str = ''
     pswd_private_key: str = ''
