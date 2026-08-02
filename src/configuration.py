@@ -60,9 +60,9 @@ class Configuration(ConfigurationBase):
     procedure_parameters: List[ProcedureParameters] = dataclasses.field(default_factory=list)
     database: str = ''
     schema: str = ''
-    # Authentication: provide a password or a key-pair (JWT) private key.
-    # If both are set, key-pair takes precedence (see Component._get_auth_parameters).
-    # Password is kept optional (not removed) for backwards compatibility with existing configs.
+    # Authentication. `auth_type` selects password vs key-pair (JWT); it defaults to
+    # 'password' so existing password configs (which have no auth_type) keep working.
+    auth_type: str = 'password'
     pswd_password: str = ''
     pswd_private_key: str = ''
-    pswd_private_key_pass: str = ''
+    pswd_private_key_passphrase: str = ''

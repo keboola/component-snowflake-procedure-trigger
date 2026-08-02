@@ -57,7 +57,7 @@ class TestComponent(unittest.TestCase):
 
     @mock.patch('snowflake.connector.connect')
     def test_password_auth_unchanged(self, m_connect):
-        """The original password authentication path is preserved: password is passed, no key-pair kwargs."""
+        """The original password authentication path is preserved (auth_type defaults to 'password')."""
         comp = _make_component(_base_config(pswd_password='secret'))
         comp._create_connection()
 
@@ -70,9 +70,18 @@ class TestComponent(unittest.TestCase):
         self.assertNotIn('authenticator', kwargs)
 
     @mock.patch('snowflake.connector.connect')
+    def test_password_auth_missing_password_raises(self, m_connect):
+        """auth_type 'password' with no password configured is a clear user error."""
+        comp = _make_component(_base_config(auth_type='password'))
+        with self.assertRaises(UserException):
+            comp._create_connection()
+        m_connect.assert_not_called()
+
+    @mock.patch('snowflake.connector.connect')
     def test_keypair_auth(self, m_connect):
-        """A configured private key switches to JWT auth with DER key bytes and no password."""
-        comp = _make_component(_base_config(pswd_private_key=_generate_private_key_pem()))
+        """auth_type 'key_pair' switches to JWT auth with DER key bytes and no password."""
+        comp = _make_component(_base_config(auth_type='key_pair',
+                                            pswd_private_key=_generate_private_key_pem()))
         comp._create_connection()
 
         _, kwargs = m_connect.call_args
@@ -84,7 +93,8 @@ class TestComponent(unittest.TestCase):
     def test_keypair_auth_encrypted_key(self, m_connect):
         """An encrypted private key is unlocked with the configured passphrase."""
         pem = _generate_private_key_pem(passphrase='topsecret')
-        comp = _make_component(_base_config(pswd_private_key=pem, pswd_private_key_pass='topsecret'))
+        comp = _make_component(_base_config(auth_type='key_pair', pswd_private_key=pem,
+                                            pswd_private_key_passphrase='topsecret'))
         comp._create_connection()
 
         _, kwargs = m_connect.call_args
@@ -92,28 +102,28 @@ class TestComponent(unittest.TestCase):
         self.assertEqual(kwargs['authenticator'], 'SNOWFLAKE_JWT')
 
     @mock.patch('snowflake.connector.connect')
-    def test_keypair_takes_precedence_over_password(self, m_connect):
-        """When both are supplied, key-pair auth wins and the password is not sent."""
-        comp = _make_component(_base_config(pswd_password='secret',
-                                            pswd_private_key=_generate_private_key_pem()))
-        comp._create_connection()
-
-        _, kwargs = m_connect.call_args
-        self.assertIn('private_key', kwargs)
-        self.assertNotIn('password', kwargs)
-
-    @mock.patch('snowflake.connector.connect')
-    def test_no_auth_method_raises(self, m_connect):
-        """Neither password nor private key configured is a clear user error."""
-        comp = _make_component(_base_config())
+    def test_keypair_missing_key_raises(self, m_connect):
+        """auth_type 'key_pair' with no private key configured is a clear user error."""
+        comp = _make_component(_base_config(auth_type='key_pair'))
         with self.assertRaises(UserException):
             comp._create_connection()
         m_connect.assert_not_called()
 
     @mock.patch('snowflake.connector.connect')
+    def test_auth_type_password_ignores_private_key(self, m_connect):
+        """auth_type drives the choice: 'password' uses the password even if a key is also present."""
+        comp = _make_component(_base_config(auth_type='password', pswd_password='secret',
+                                            pswd_private_key=_generate_private_key_pem()))
+        comp._create_connection()
+
+        _, kwargs = m_connect.call_args
+        self.assertEqual(kwargs['password'], 'secret')
+        self.assertNotIn('private_key', kwargs)
+
+    @mock.patch('snowflake.connector.connect')
     def test_invalid_private_key_raises(self, m_connect):
         """A malformed private key raises a UserException rather than an opaque crash."""
-        comp = _make_component(_base_config(pswd_private_key='not-a-real-key'))
+        comp = _make_component(_base_config(auth_type='key_pair', pswd_private_key='not-a-real-key'))
         with self.assertRaises(UserException):
             comp._create_connection()
         m_connect.assert_not_called()
@@ -122,7 +132,8 @@ class TestComponent(unittest.TestCase):
     def test_wrong_passphrase_raises(self, m_connect):
         """A wrong passphrase for an encrypted key raises a UserException."""
         pem = _generate_private_key_pem(passphrase='correct')
-        comp = _make_component(_base_config(pswd_private_key=pem, pswd_private_key_pass='wrong'))
+        comp = _make_component(_base_config(auth_type='key_pair', pswd_private_key=pem,
+                                            pswd_private_key_passphrase='wrong'))
         with self.assertRaises(UserException):
             comp._create_connection()
         m_connect.assert_not_called()

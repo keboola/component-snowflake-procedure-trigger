@@ -54,20 +54,23 @@ class Component(ComponentBase):
         )
 
     def _get_auth_parameters(self) -> dict:
-        """Build the auth-specific ``connect()`` kwargs.
+        """Build the auth-specific ``connect()`` kwargs based on ``auth_type``.
 
-        Key-pair (JWT) authentication is used when a private key is configured; otherwise the
-        component falls back to the original password authentication. Providing neither is a
-        user error. Key-pair takes precedence when both are supplied.
+        'key_pair' loads the configured private key and connects with JWT authentication;
+        'password' (the default) keeps the original password authentication. The field for
+        the selected type must be set, otherwise it is a user error.
         """
-        if self._configuration.pswd_private_key:
+        if self._configuration.auth_type == 'key_pair':
+            if not self._configuration.pswd_private_key:
+                raise UserException("Authentication Type is 'Key Pair' but no Private Key is "
+                                    "configured in the connection settings.")
             private_key = self._load_private_key(self._configuration.pswd_private_key,
-                                                 self._configuration.pswd_private_key_pass)
+                                                 self._configuration.pswd_private_key_passphrase)
             return {'private_key': private_key, 'authenticator': 'SNOWFLAKE_JWT'}
-        if self._configuration.pswd_password:
-            return {'password': self._configuration.pswd_password}
-        raise UserException('No authentication method configured. Provide either a Password '
-                            'or a Private Key in the connection settings.')
+        if not self._configuration.pswd_password:
+            raise UserException("Authentication Type is 'Password' but no Password is "
+                                "configured in the connection settings.")
+        return {'password': self._configuration.pswd_password}
 
     @staticmethod
     def _load_private_key(private_key_pem: str, passphrase: str) -> bytes:
