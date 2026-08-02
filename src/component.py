@@ -6,6 +6,7 @@ import logging
 
 # configuration variables
 import snowflake
+from cryptography.exceptions import UnsupportedAlgorithm
 from cryptography.hazmat.primitives import serialization
 from keboola.component import UserException
 from keboola.component.base import ComponentBase
@@ -76,7 +77,7 @@ class Component(ComponentBase):
                 private_key_pem.encode('utf-8'),
                 password=passphrase.encode('utf-8') if passphrase else None
             )
-        except (ValueError, TypeError) as e:
+        except (ValueError, TypeError, UnsupportedAlgorithm) as e:
             raise UserException('Failed to load the Snowflake private key. Ensure it is a valid '
                                 'PEM-formatted PKCS#8 key and the passphrase (if any) is correct.') from e
         return p_key.private_bytes(
