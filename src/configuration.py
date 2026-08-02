@@ -55,9 +55,13 @@ class ProcedureParameters(ConfigurationBase):
 class Configuration(ConfigurationBase):
     account: str
     username: str
-    pswd_password: str
     warehouse: str
     name: str
     procedure_parameters: List[ProcedureParameters] = dataclasses.field(default_factory=list)
     database: str = ''
     schema: str = ''
+    # Authentication (provide exactly one): password or key-pair (JWT).
+    # Password is kept optional (not removed) for backwards compatibility with existing configs.
+    pswd_password: str = ''
+    pswd_private_key: str = ''
+    pswd_private_key_pass: str = ''

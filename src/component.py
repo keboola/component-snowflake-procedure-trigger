@@ -6,6 +6,7 @@ import logging
 
 # configuration variables
 import snowflake
+from cryptography.hazmat.primitives import serialization
 from keboola.component import UserException
 from keboola.component.base import ComponentBase
 from snowflake.connector import SnowflakeConnection
@@ -44,11 +45,44 @@ class Component(ComponentBase):
     def _create_connection(self):
         self._connection = snowflake.connector.connect(
             user=self._configuration.username,
-            password=self._configuration.pswd_password,
             account=self._configuration.account,
             database=self._configuration.database,
             schema=self._configuration.schema,
-            warehouse=self._configuration.warehouse
+            warehouse=self._configuration.warehouse,
+            **self._get_auth_parameters()
+        )
+
+    def _get_auth_parameters(self) -> dict:
+        """Build the auth-specific ``connect()`` kwargs.
+
+        Key-pair (JWT) authentication is used when a private key is configured; otherwise the
+        component falls back to the original password authentication. Providing neither is a
+        user error. Key-pair takes precedence when both are supplied.
+        """
+        if self._configuration.pswd_private_key:
+            private_key = self._load_private_key(self._configuration.pswd_private_key,
+                                                 self._configuration.pswd_private_key_pass)
+            return {'private_key': private_key, 'authenticator': 'SNOWFLAKE_JWT'}
+        if self._configuration.pswd_password:
+            return {'password': self._configuration.pswd_password}
+        raise UserException('No authentication method configured. Provide either a Password '
+                            'or a Private Key in the connection settings.')
+
+    @staticmethod
+    def _load_private_key(private_key_pem: str, passphrase: str) -> bytes:
+        """Parse a PEM (PKCS#8) private key and return it as DER bytes for the Snowflake connector."""
+        try:
+            p_key = serialization.load_pem_private_key(
+                private_key_pem.encode('utf-8'),
+                password=passphrase.encode('utf-8') if passphrase else None
+            )
+        except (ValueError, TypeError) as e:
+            raise UserException('Failed to load the Snowflake private key. Ensure it is a valid '
+                                'PEM-formatted PKCS#8 key and the passphrase (if any) is correct.') from e
+        return p_key.private_bytes(
+            encoding=serialization.Encoding.DER,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
         )
 
     def _init_configuration(self) -> None:

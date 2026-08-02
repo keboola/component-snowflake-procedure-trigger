@@ -4,7 +4,6 @@
   "required": [
     "account",
     "username",
-    "#password",
     "warehouse"
   ],
   "properties": {
@@ -24,8 +23,22 @@
       "title": "Password",
       "type": "string",
       "format": "password",
-      "description": "A password authenticating the Snowflake user.",
+      "description": "A password authenticating the Snowflake user. Provide <strong>either</strong> a Password <strong>or</strong> a Private Key below. Snowflake is phasing out password authentication for service accounts, so key-pair authentication is recommended for automated jobs.",
       "propertyOrder": 300
+    },
+    "#private_key": {
+      "title": "Private Key",
+      "type": "string",
+      "format": "password",
+      "description": "PEM-formatted RSA private key (PKCS#8) for Snowflake key-pair (JWT) authentication. Provide this <strong>instead of</strong> a Password. The matching public key must be assigned to the user with <code>ALTER USER ... SET RSA_PUBLIC_KEY</code>. See <a href='https://docs.snowflake.com/en/user-guide/key-pair-auth'>the key-pair authentication documentation</a>.",
+      "propertyOrder": 310
+    },
+    "#private_key_pass": {
+      "title": "Private Key Passphrase",
+      "type": "string",
+      "format": "password",
+      "description": "Optional passphrase if the private key above is encrypted. Leave empty for an unencrypted key.",
+      "propertyOrder": 320
     },
     "database": {
       "title": "Database",
