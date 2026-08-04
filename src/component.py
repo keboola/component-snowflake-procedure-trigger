@@ -9,6 +9,7 @@ import snowflake
 from keboola.component import UserException
 from keboola.component.base import ComponentBase
 from snowflake.connector import SnowflakeConnection
+from snowflake.connector.errors import Error as SnowflakeError
 
 from configuration import Configuration, ProcedureParameters
 
@@ -42,14 +43,21 @@ class Component(ComponentBase):
             self._connection.close()
 
     def _create_connection(self):
-        self._connection = snowflake.connector.connect(
-            user=self._configuration.username,
-            password=self._configuration.pswd_password,
-            account=self._configuration.account,
-            database=self._configuration.database,
-            schema=self._configuration.schema,
-            warehouse=self._configuration.warehouse
-        )
+        try:
+            self._connection = snowflake.connector.connect(
+                user=self._configuration.username,
+                password=self._configuration.pswd_password,
+                account=self._configuration.account,
+                database=self._configuration.database,
+                schema=self._configuration.schema,
+                warehouse=self._configuration.warehouse
+            )
+        except SnowflakeError as e:
+            raise UserException(
+                f'Failed to connect to Snowflake: {e} '
+                'Please check the account, username, password, warehouse, database and schema '
+                'in the component configuration, and that the user has access to them.'
+            ) from e
 
     def _init_configuration(self) -> None:
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
