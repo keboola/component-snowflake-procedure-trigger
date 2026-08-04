@@ -50,7 +50,7 @@ class Component(ComponentBase):
             database=self._configuration.database,
             schema=self._configuration.schema,
             warehouse=self._configuration.warehouse,
-            **self._get_auth_parameters()
+            **self._get_auth_parameters(),
         )
 
     def _get_auth_parameters(self) -> dict:
@@ -62,14 +62,17 @@ class Component(ComponentBase):
         """
         if self._configuration.auth_type == 'key_pair':
             if not self._configuration.pswd_private_key:
-                raise UserException("Authentication Type is 'Key Pair' but no Private Key is "
-                                    "configured in the connection settings.")
-            private_key = self._load_private_key(self._configuration.pswd_private_key,
-                                                 self._configuration.pswd_private_key_passphrase)
+                raise UserException(
+                    "Authentication Type is 'Key Pair' but no Private Key is configured in the connection settings."
+                )
+            private_key = self._load_private_key(
+                self._configuration.pswd_private_key, self._configuration.pswd_private_key_passphrase
+            )
             return {'private_key': private_key, 'authenticator': 'SNOWFLAKE_JWT'}
         if not self._configuration.pswd_password:
-            raise UserException("Authentication Type is 'Password' but no Password is "
-                                "configured in the connection settings.")
+            raise UserException(
+                "Authentication Type is 'Password' but no Password is configured in the connection settings."
+            )
         return {'password': self._configuration.pswd_password}
 
     @staticmethod

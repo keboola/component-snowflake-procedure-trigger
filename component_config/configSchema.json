@@ -14,7 +14,7 @@
         "password",
         "key_pair"
       ],
-      "default": "key_pair",
+      "default": "password",
       "options": {
         "enum_titles": [
           "Password",
