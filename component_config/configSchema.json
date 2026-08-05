@@ -4,10 +4,26 @@
   "required": [
     "account",
     "username",
-    "#password",
     "warehouse"
   ],
   "properties": {
+    "auth_type": {
+      "title": "Authentication Type",
+      "type": "string",
+      "enum": [
+        "password",
+        "key_pair"
+      ],
+      "default": "password",
+      "options": {
+        "enum_titles": [
+          "Password",
+          "Key Pair"
+        ]
+      },
+      "description": "How to authenticate to Snowflake. Snowflake is phasing out password authentication for service accounts, so <strong>Key Pair</strong> is recommended for automated jobs.",
+      "propertyOrder": 50
+    },
     "account": {
       "title": "Account",
       "type": "string",
@@ -25,25 +41,54 @@
       "type": "string",
       "format": "password",
       "description": "A password authenticating the Snowflake user.",
+      "options": {
+        "dependencies": {
+          "auth_type": "password"
+        }
+      },
       "propertyOrder": 300
+    },
+    "#private_key": {
+      "title": "Private Key",
+      "type": "string",
+      "format": "textarea",
+      "description": "PEM-formatted RSA private key (PKCS#8) for key-pair (JWT) authentication. The matching public key must be assigned to the user with <code>ALTER USER ... SET RSA_PUBLIC_KEY</code>. See <a href='https://docs.snowflake.com/en/user-guide/key-pair-auth'>the key-pair authentication documentation</a>.",
+      "options": {
+        "dependencies": {
+          "auth_type": "key_pair"
+        }
+      },
+      "propertyOrder": 400
+    },
+    "#private_key_passphrase": {
+      "title": "Private Key Passphrase",
+      "type": "string",
+      "format": "password",
+      "description": "Optional passphrase if the private key is encrypted. Leave empty for an unencrypted key.",
+      "options": {
+        "dependencies": {
+          "auth_type": "key_pair"
+        }
+      },
+      "propertyOrder": 500
     },
     "database": {
       "title": "Database",
       "type": "string",
       "description": "Name of the Snowflake database.",
-      "propertyOrder": 410
+      "propertyOrder": 550
     },
     "schema": {
       "title": "Schema",
       "type": "string",
       "description": "Name of the Snowflake schema.",
-      "propertyOrder": 420
+      "propertyOrder": 560
     },
     "warehouse": {
       "title": "Warehouse",
       "type": "string",
       "description": "Name of the Snowflake warehouse to be used.",
-      "propertyOrder": 500
+      "propertyOrder": 600
     }
   }
 }

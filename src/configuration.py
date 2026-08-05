@@ -55,9 +55,15 @@ class ProcedureParameters(ConfigurationBase):
 class Configuration(ConfigurationBase):
     account: str
     username: str
-    pswd_password: str
     warehouse: str
     name: str
     procedure_parameters: List[ProcedureParameters] = dataclasses.field(default_factory=list)
     database: str = ''
     schema: str = ''
+    # Authentication. `auth_type` selects password vs key-pair (JWT). Defaults to 'password'
+    # so existing password configs (which have no auth_type stored) keep working — including
+    # if they are re-saved in the UI. Key-pair is opt-in; the schema flags it as recommended.
+    auth_type: str = 'password'
+    pswd_password: str = ''
+    pswd_private_key: str = ''
+    pswd_private_key_passphrase: str = ''

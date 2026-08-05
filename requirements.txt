@@ -1,5 +1,6 @@
 keboola.component==1.4.3
-snowflake-connector-python
+snowflake-connector-python==3.18.1
+cryptography
 git+https://github.com/bakobako/dataconf#egg=dataconf
 mock
 freezegun
