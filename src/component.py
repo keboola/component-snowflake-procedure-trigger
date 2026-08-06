@@ -11,6 +11,7 @@ from cryptography.hazmat.primitives import serialization
 from keboola.component import UserException
 from keboola.component.base import ComponentBase
 from snowflake.connector import SnowflakeConnection
+from snowflake.connector.errors import Error as SnowflakeError
 
 from configuration import Configuration, ProcedureParameters
 
@@ -44,14 +45,23 @@ class Component(ComponentBase):
             self._connection.close()
 
     def _create_connection(self):
-        self._connection = snowflake.connector.connect(
-            user=self._configuration.username,
-            account=self._configuration.account,
-            database=self._configuration.database,
-            schema=self._configuration.schema,
-            warehouse=self._configuration.warehouse,
-            **self._get_auth_parameters(),
-        )
+        auth_parameters = self._get_auth_parameters()
+        try:
+            self._connection = snowflake.connector.connect(
+                user=self._configuration.username,
+                account=self._configuration.account,
+                database=self._configuration.database,
+                schema=self._configuration.schema,
+                warehouse=self._configuration.warehouse,
+                **auth_parameters,
+            )
+        except SnowflakeError as e:
+            raise UserException(
+                f'Failed to connect to Snowflake: {e} '
+                'Please check the account, username, authentication (password or key pair), '
+                'warehouse, database and schema in the component configuration, and that the '
+                'user has access to them.'
+            ) from e
 
     def _get_auth_parameters(self) -> dict:
         """Build the auth-specific ``connect()`` kwargs based on ``auth_type``.
